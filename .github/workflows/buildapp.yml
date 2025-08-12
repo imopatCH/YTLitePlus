@@ -47,7 +47,8 @@ jobs:
   build:
     name: Build YTLitePlus (iOS ${{ inputs.sdk_version }})
     runs-on: macos-13
-    permissions: contents: write
+    permissions:
+      contents: write
 
     env:
       THEOS: ${{ github.workspace }}/theos
@@ -76,8 +77,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: theos/sdks/iPhoneOS${{ env.SDK_VERSION }}.sdk
-          key: stellarize-ios-sdk-${{ env.SDK_VERSION }}
-          restore-keys: stellarize-ios-sdk-
+          key: ios-sdk-${{ env.SDK_VERSION }}
+          restore-keys: ios-sdk-
 
       - name: Download iOS SDK if needed
         if: steps.sdk-cache.outputs.cache-hit != 'true'
@@ -96,17 +97,16 @@ jobs:
           repository: qnblackcat/theos-jailed
           path: theos-jailed
           submodules: recursive
-        # Continues in next step...
 
       - name: Run theos-jailed install
         run: ./theos-jailed/install
         env:
           THEOS: ${{ env.THEOS }}
 
-      - name: Set GNU make in PATH
+      - name: Set GNU Make in PATH
         run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
 
-      - name: Build & install libundirect
+      - name: Build and install libundirect
         run: |
           cd main
           git clone https://github.com/opa334/libundirect.git libundirect
@@ -154,20 +154,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: YTLitePlus_${YT_VERSION}_5.0.1.ipa
-          path: main/YTLitePlus_${YT_VERSION}_5.0.1.ipa
+          path: YTLitePlus_${YT_VERSION}_5.0.1.ipa
 
       - name: Upload to Catbox
         if: ${{ inputs.catbox_upload }}
         run: |
-          RESPONSE=$(curl -F fileToUpload=@main/YTLitePlus_${YT_VERSION}_5.0.1.ipa https://catbox.moe/user/api.php)
+          RESPONSE=$(curl -F fileToUpload=@YTLitePlus_${YT_VERSION}_5.0.1.ipa https://catbox.moe/user/api.php)
           URL=$(echo $RESPONSE | grep -o 'https://files.catbox.moe/[^\"]*')
           echo "CATBOX_URL=$URL" >> $GITHUB_ENV
 
       - name: Create Draft GitHub Release
         if: ${{ inputs.create_release }}
         uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${YT_VERSION}-5.0.1
           name: YTLitePlus v${YT_VERSION}-5.0.1
